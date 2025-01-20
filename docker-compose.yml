@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  youtube_downloader:
+    build: .
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./downloads:/app/downloads
+      - ./:/app
+    environment:
+      - FLASK_SECRET_KEY=your-secret-key
+      - DOWNLOAD_DIRECTORY=/app/downloads
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Optional: Add a cronjob to clean up old files (if needed)
+  # download_cleaner:
+  #   image: python:3.8-slim
+  #   volumes:
+  #     - ./downloads:/app/downloads
+  #   command: ["python", "-c", "import os, time; [os.remove(f) for f in os.listdir('/app/downloads') if os.path.isfile(os.path.join('/app/downloads', f)) and time.time() - os.path.getmtime(os.path.join('/app/downloads', f)) > 86400]"]
+  #   restart: on-failure
+  #   depends_on:
+  #     - youtube_downloader
