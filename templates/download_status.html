@@ -4,25 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Status</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <h2 class="text-center mb-4">Download Status</h2>
-        
-        {% if error %}
-            <div class="alert alert-danger text-center">{{ error }}</div>
-        {% elif message %}
-            <div class="card border-success mx-auto" style="max-width: 500px;">
-                <div class="card-body">
-                    <h4 class="card-title">Download Complete!</h4>
-                    <p class="card-text">{{ message }}</p>
-                    <a href="{{ download_url }}" 
-                       class="btn btn-primary"
-                       download>Download File</a>
-                </div>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+            <h2 class="text-xl font-semibold mb-4">Download Status</h2>
+            <div id="status-message" class="text-gray-700">Preparing your download, please wait...</div>
+            <div id="download-section" class="mt-4 hidden">
+                <a id="download-link" href="#" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200">Download File</a>
             </div>
-        {% endif %}
+        </div>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            function checkStatus() {
+                $.ajax({
+                    url: "{{ url_for('check_status', task_id=task_id) }}",
+                    method: "GET",
+                    success: function(response) {
+                        if (response.status === 'ready') {
+                            $('#status-message').text('Your file is ready for download.');
+                            $('#download-link').attr('href', response.download_url);
+                            $('#download-section').removeClass('hidden');
+                        } else if (response.status === 'error') {
+                            $('#status-message').text('An error occurred while preparing your download.');
+                        } else {
+                            setTimeout(checkStatus, 5000); // Check again after 5 seconds
+                        }
+                    },
+                    error: function() {
+                        $('#status-message').text('Failed to retrieve the status. Please try again later.');
+                    }
+                });
+            }
+
+            checkStatus(); // Initial check
+        });
+    </script>
 </body>
 </html>
